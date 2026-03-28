@@ -116,11 +116,23 @@ LOGGING = {
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': '/var/log/myapp/django.log',  # your log file
-            'formatter': 'verbose',
+        "django_file": {
+            "class": "logging.FileHandler",
+            "filename": "/var/log/myapp/django.log",
+            "formatter": "verbose",
+            "level": "INFO",
+        },
+        "celery_file": {
+            "class": "logging.FileHandler",
+            "filename": "/var/log/myapp/celery.log",
+            "formatter": "verbose",
+            "level": "INFO",
+        },
+        "celery_beat_file": {
+            "class": "logging.FileHandler",
+            "filename": "/var/log/myapp/celery-beat.log",
+            "formatter": "verbose",
+            "level": "INFO",
         },
     },
     "root": {
@@ -128,45 +140,40 @@ LOGGING = {
         "level": "INFO",
     },
     "loggers": {
+        # Django logs
         "django": {
-            "handlers": ["console"],
+            "handlers": ["console", "django_file"],
             "level": "INFO",
             "propagate": False,
         },
         "django.server": {
-            "handlers": ["console"],
+            "handlers": ["console", "django_file"],
             "level": "INFO",
             "propagate": False,
         },
         "django.request": {
-            "handlers": ["console"],
+            "handlers": ["console", "django_file"],
             "level": "INFO",
             "propagate": False,
         },
+
+        # Celery logs
         "celery": {
-            "handlers": ["console"],
+            "handlers": ["console", "celery_file"],
             "level": "INFO",
             "propagate": False,
         },
         "celery.task": {
-            "handlers": ["console"],
+            "handlers": ["console", "celery_file"],
             "level": "INFO",
             "propagate": False,
         },
-        "django.continuous": {
-            "handlers": ["console"],
+
+        # Celery Beat logs
+        "celery.beat": {
+            "handlers": ["console", "celery_beat_file"],
             "level": "INFO",
             "propagate": False,
-        },
-        "celery.heartbeat": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        'django': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True,
         },
     },
 }
