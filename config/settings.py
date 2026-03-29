@@ -10,6 +10,14 @@ SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY", "dev-only-change-me-for-cloudwatch-testing"
 )
 
+import os
+
+LOG_DIR = "/app/logs"
+
+# Ensure directory exists (important inside container)
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 
 ALLOWED_HOSTS = ["*"]
@@ -104,76 +112,56 @@ CELERY_BEAT_SCHEDULE = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+
     "formatters": {
-        "verbose": {
-            "format": "[{levelname}] {asctime} {name} {message}",
-            "style": "{",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
+        "standard": {
+            "format": "[%(levelname)s] %(asctime)s %(name)s %(message)s",
         },
     },
+
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            "formatter": "standard",
         },
+
         "django_file": {
-            "class": "logging.FileHandler",
-            "filename": "/var/log/myapp/django.log",
-            "formatter": "verbose",
             "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": f"{LOG_DIR}/django.log",
+            "formatter": "standard",
         },
-        "celery_file": {
+
+        "error_file": {
+            "level": "ERROR",
             "class": "logging.FileHandler",
-            "filename": "/var/log/myapp/celery.log",
-            "formatter": "verbose",
-            "level": "INFO",
-        },
-        "celery_beat_file": {
-            "class": "logging.FileHandler",
-            "filename": "/var/log/myapp/celery-beat.log",
-            "formatter": "verbose",
-            "level": "INFO",
+            "filename": f"{LOG_DIR}/django_error.log",
+            "formatter": "standard",
         },
     },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
-    },
+
     "loggers": {
-        # Django logs
         "django": {
             "handlers": ["console", "django_file"],
             "level": "INFO",
-            "propagate": False,
+            "propagate": True,
         },
-        "django.server": {
-            "handlers": ["console", "django_file"],
-            "level": "INFO",
-            "propagate": False,
-        },
+
         "django.request": {
+            "handlers": ["error_file"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+
+        # Your custom app logs (IMPORTANT)
+        "__main__": {
             "handlers": ["console", "django_file"],
             "level": "INFO",
-            "propagate": False,
         },
+    },
 
-        # Celery logs
-        "celery": {
-            "handlers": ["console", "celery_file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "celery.task": {
-            "handlers": ["console", "celery_file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-
-        # Celery Beat logs
-        "celery.beat": {
-            "handlers": ["console", "celery_beat_file"],
-            "level": "INFO",
-            "propagate": False,
-        },
+    "root": {
+        "handlers": ["console", "django_file"],
+        "level": "INFO",
     },
 }
